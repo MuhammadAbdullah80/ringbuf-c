@@ -21,6 +21,44 @@ jobs:
           make test CC=${{ matrix.cc }} \
             CFLAGS="-std=${{ matrix.std }} -Wall -Wextra -Werror -pedantic -O2"
 
+  cmake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure, build and test
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          ctest --test-dir build --output-on-failure
+      - name: Install into a staging prefix
+        run: cmake --install build --prefix "$PWD/stage"
+      - name: Consume the installed package from a separate project
+        run: |
+          mkdir -p consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.14)
+          project(consumer LANGUAGES C)
+          find_package(ringbuf REQUIRED)
+          add_executable(consumer main.c)
+          target_link_libraries(consumer PRIVATE ringbuf::ringbuf)
+          EOF
+          cat > consumer/main.c <<'EOF'
+          #include <ringbuf.h>
+          #include <stdio.h>
+          int main(void) {
+              unsigned char storage[8];
+              ringbuf rb;
+              if (ringbuf_init(&rb, storage, sizeof storage) != 0) return 1;
+              if (ringbuf_write(&rb, "hello", 5) != 5) return 1;
+              printf("ok, %zu bytes buffered
+", ringbuf_size(&rb));
+              return 0;
+          }
+          EOF
+          cmake -S consumer -B consumer/build -DCMAKE_PREFIX_PATH="$PWD/stage"
+          cmake --build consumer/build
+          ./consumer/build/consumer
+
   sanitizers:
     runs-on: ubuntu-latest
     steps:
