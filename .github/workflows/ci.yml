@@ -50,8 +50,8 @@ jobs:
               ringbuf rb;
               if (ringbuf_init(&rb, storage, sizeof storage) != 0) return 1;
               if (ringbuf_write(&rb, "hello", 5) != 5) return 1;
-              printf("ok, %zu bytes buffered
-", ringbuf_size(&rb));
+              printf("ok, %zu bytes buffered", ringbuf_size(&rb));
+              putchar(10);
               return 0;
           }
           EOF
