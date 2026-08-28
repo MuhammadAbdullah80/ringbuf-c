@@ -62,10 +62,35 @@ sizing a buffer to a protocol's maximum frame should not have to round 300 up to
 **Not thread-safe.** A single-producer/single-consumer arrangement is safe only
 with the appropriate atomics and memory barriers, deliberately out of scope.
 
+## Building
+
+A Makefile for the direct route:
+
+```
+make test
+```
+
+or CMake, if you are consuming this from another project:
+
+```cmake
+add_subdirectory(ringbuf)
+target_link_libraries(your_target PRIVATE ringbuf::ringbuf)
+```
+
+`find_package(ringbuf REQUIRED)` works after `cmake --install`. The install path
+is covered in CI by building a separate consumer project against the staged
+prefix, since an export set that does not actually work is the usual way this
+part rots.
+
+Compiler warnings are `PRIVATE` and the C standard is only pinned when ringbuf
+is the top-level project, so adding this as a subdirectory does not stamp over a
+parent project's own settings.
+
 ## Tests
 
 ```
 make test
+ctest --test-dir build     # after a cmake build
 ```
 
 83 checks and no framework. CI builds under gcc and clang at `-std=c99` and

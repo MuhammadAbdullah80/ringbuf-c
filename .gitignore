@@ -1,3 +1,5 @@
 ringbuf-test
 *.o
 *.a
+build/
+cmake-build-*/
