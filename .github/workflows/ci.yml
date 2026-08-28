@@ -38,7 +38,7 @@ jobs:
           cat > consumer/CMakeLists.txt <<'EOF'
           cmake_minimum_required(VERSION 3.14)
           project(consumer LANGUAGES C)
-          find_package(ringbuf REQUIRED)
+          find_package(ringbuf 0.1 REQUIRED)
           add_executable(consumer main.c)
           target_link_libraries(consumer PRIVATE ringbuf::ringbuf)
           EOF

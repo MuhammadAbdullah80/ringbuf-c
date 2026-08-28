@@ -51,7 +51,32 @@ install(TARGETS ringbuf
     ARCHIVE       DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
+set(RINGBUF_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/ringbuf)
+
 install(EXPORT ringbufTargets
     FILE        ringbufTargets.cmake
     NAMESPACE   ringbuf::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ringbuf)
+    DESTINATION ${RINGBUF_CMAKE_DIR})
+
+# The targets file alone is not enough: find_package(ringbuf) looks for
+# ringbufConfig.cmake, and without one it reports the package as missing even
+# though everything else installed correctly. The config file is what pulls the
+# targets file in.
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ringbufConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ringbufConfig.cmake
+    INSTALL_DESTINATION ${RINGBUF_CMAKE_DIR})
+
+# SameMinorVersion: patch releases are drop-in, a new minor may add symbols a
+# consumer pinned against an older one will not find.
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/ringbufConfigVersion.cmake
+    VERSION       ${PROJECT_VERSION}
+    COMPATIBILITY SameMinorVersion)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/ringbufConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/ringbufConfigVersion.cmake
+    DESTINATION ${RINGBUF_CMAKE_DIR})
