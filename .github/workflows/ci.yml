@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+        std: [c99, c11]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run
+        run: |
+          ${{ matrix.cc }} --version
+          make test CC=${{ matrix.cc }} \
+            CFLAGS="-std=${{ matrix.std }} -Wall -Wextra -Werror -pedantic -O2"
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Address and undefined-behaviour sanitizers
+        run: |
+          make clean
+          make test CC=clang \
+            CFLAGS="-std=c11 -Wall -Wextra -Werror -pedantic -g -fsanitize=address,undefined -fno-omit-frame-pointer"
+
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install valgrind
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y valgrind
+      - name: Run under valgrind
+        run: |
+          make clean
+          make CFLAGS="-std=c99 -Wall -Wextra -Werror -pedantic -g -O1"
+          valgrind --error-exitcode=1 --leak-check=full --track-origins=yes ./ringbuf-test
